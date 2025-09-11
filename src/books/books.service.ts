@@ -4,20 +4,20 @@ import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 
 @Injectable()
-export class BookService {
+export class BooksService {
   private books: Book[] = [
     {
       id: 1,
       title: '1984',
       author: 'George Orwell',
-      year: 1949,
+      publishedYear: 1949,
       genre: 'Dystopian',
     },
     {
       id: 2,
       title: 'The Hobbit',
       author: 'J.R.R. Tolkien',
-      year: 1937,
+      publishedYear: 1937,
       genre: 'Fantasy',
     },
   ];
@@ -32,8 +32,10 @@ export class BookService {
     return book;
   }
 
-  create(createBookDto: CreateBookDto): Book {
-    const newBook: Book = { id: Date.now(), ...createBookDto };
+  create(dto: CreateBookDto): Book {
+    const maxId =
+      this.books.length > 0 ? Math.max(...this.books.map((b) => b.id)) : 0;
+    const newBook: Book = { id: maxId + 1, ...dto };
     this.books.push(newBook);
     return newBook;
   }
@@ -42,15 +44,13 @@ export class BookService {
     id: number,
     updateBookDto: UpdateBookDto,
   ): { message: string; book: Book } {
-    const book = this.books.find((book) => book.id === id);
-    if (!book) throw new NotFoundException(`Book with ID: ${id} not found`);
-    if (updateBookDto?.genre) book.genre = updateBookDto.genre;
+    const book = this.findOne(id);
     if (updateBookDto?.genre) book.genre = updateBookDto.genre;
     return { message: `Book with ID: ${id} updated succesfully.`, book };
   }
 
   delete(id: number): { message: string } {
-    const index = this.books.findIndex((user) => user.id === id);
+    const index = this.books.findIndex((book) => book.id === id);
     if (index === -1) {
       throw new NotFoundException(`Book with ID ${id} not found`);
     }

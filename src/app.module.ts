@@ -4,11 +4,12 @@ import { AppService } from './app.service';
 import { HelloController } from './hello/hello.controller';
 import { GreetService } from './greet/greet.service';
 import { GreetController } from './greet/greet.controller';
-import { UserModule } from './user/user.module';
-import { BookModule } from './book/book.module';
+import { UsersModule } from './users/users.module';
+import { BooksModule } from './books/books.module';
+import { NotesModule } from './notes/notes.module';
 
 @Module({
-  imports: [UserModule, BookModule],
+  imports: [UsersModule, BooksModule, NotesModule],
   controllers: [AppController, HelloController, GreetController],
   providers: [AppService, GreetService],
 })
