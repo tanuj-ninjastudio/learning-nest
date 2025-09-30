@@ -20,8 +20,8 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
 
   const config = new DocumentBuilder()
-    .setTitle('User & Notes API')
-    .setDescription('API documentation for managing users and notes')
+    .setTitle('Notes API')
+    .setDescription('API documentation for managing notes')
     .setVersion('1.0')
     // .addBearerAuth() // for JWT auth
     .build();

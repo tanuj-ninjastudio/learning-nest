@@ -3,52 +3,37 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user-dto';
+import { User } from './user.entity';
 import { UserExistsException } from 'src/common/exceptions/user-exists.exception';
-
-export interface User {
-  id: number;
-  name: string;
-  age: number;
-  email: string;
-  password: string;
-}
+import { IApiResponse } from 'src/common/interfaces/api-response.interface';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [
-    {
-      id: 1,
-      name: 'Alice',
-      age: 22,
-      email: 'alice@gmail.com',
-      password: 'Test@123',
-    },
-    {
-      id: 2,
-      name: 'Bob',
-      age: 28,
-      email: 'bob@gmail.com',
-      password: 'Test@1111',
-    },
-  ];
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+  ) {}
 
-  // ✅ GET /users
-  findAll(): { status: number; message: string; data: User[] } {
+  async findAll(): Promise<IApiResponse<User[]>> {
+    const users = await this.userRepo.find({ relations: ['tasks'] });
     return {
       status: 200,
       message: 'Users fetched successfully',
-      data: this.users,
+      data: users,
     };
   }
 
-  // ✅ GET /users/:id
-  findOne(id: number): { status: number; message: string; data: User } {
-    const user = this.users.find((u) => u.id === id);
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
+  async findOne(id: number): Promise<IApiResponse<User>> {
+    const user = await this.userRepo.findOne({
+      where: { id },
+      relations: ['tasks'],
+    });
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+
     return {
       status: 200,
       message: `User with ID ${id} fetched successfully`,
@@ -56,73 +41,50 @@ export class UsersService {
     };
   }
 
-  create(createUserDto: CreateUserDto): {
-    status: number;
-    message: string;
-    data: User;
-  } {
-    const existing = this.users.find((u) => u.email === createUserDto.email);
-    if (existing) {
-      throw new UserExistsException(createUserDto.email);
-    }
+  async create(dto: CreateUserDto): Promise<IApiResponse<User>> {
+    const existing = await this.userRepo.findOne({
+      where: { email: dto.email },
+    });
+    if (existing) throw new UserExistsException(dto.email);
 
-    const maxId =
-      this.users.length > 0 ? Math.max(...this.users.map((u) => u.id)) : 0;
-
-    const newUser: User = {
-      id: maxId + 1,
-      ...createUserDto,
-    };
-
-    this.users.push(newUser);
+    const user = this.userRepo.create(dto);
+    const saved = await this.userRepo.save(user);
 
     return {
       status: 201,
       message: 'User created successfully',
-      data: newUser,
+      data: saved,
     };
   }
 
-  findUser(id: number) {
-    const user = this.users.find((user) => user.id === id);
-    return user;
-  }
+  async update(id: number, dto: UpdateUserDto): Promise<IApiResponse<User>> {
+    const user = await this.userRepo.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
 
-  update(
-    id: number,
-    updateUserDto: UpdateUserDto,
-  ): { status: number; message: string; data: User } {
-    const user = this.findUser(id);
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-
-    if (updateUserDto?.email) {
-      const emailExists = this.users.some(
-        (u) => u.email === updateUserDto.email && u.id !== id,
-      );
-      if (emailExists) {
-        throw new BadRequestException(
-          `Email "${updateUserDto.email}" is already in use`,
-        );
+    if (dto.email) {
+      const emailExists = await this.userRepo.findOne({
+        where: { email: dto.email },
+      });
+      if (emailExists && emailExists.id !== id) {
+        throw new BadRequestException(`Email "${dto.email}" is already in use`);
       }
     }
 
-    Object.assign(user, updateUserDto);
+    Object.assign(user, dto);
+    const updated = await this.userRepo.save(user);
 
     return {
       status: 200,
       message: `User with ID ${id} updated successfully`,
-      data: user,
+      data: updated,
     };
   }
 
-  delete(id: number): { status: number; message: string; data: null } {
-    const index = this.users.findIndex((user) => user.id === id);
-    if (index === -1) {
+  async delete(id: number): Promise<IApiResponse<null>> {
+    const result = await this.userRepo.delete(id);
+    if (result.affected === 0) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    this.users.splice(index, 1);
 
     return {
       status: 200,

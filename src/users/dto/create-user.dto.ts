@@ -15,34 +15,35 @@ export class CreateUserDto {
     example: 'John Doe',
   })
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Name must not be empty' })
   name: string;
 
   @ApiProperty({
-    description: 'Age of the user (between 18 and 100)',
+    description: 'Age of the user (must be between 18 and 100)',
     example: 25,
     minimum: 18,
     maximum: 100,
   })
-  @IsInt()
+  @IsInt({ message: 'Age must be a valid integer' })
   @Min(18, { message: 'Age must be at least 18' })
-  @Max(100, { message: 'Age must not be greater than 100' })
+  @Max(100, { message: 'Age must not exceed 100' })
   age: number;
 
   @ApiProperty({
     description: 'Unique email address of the user',
     example: 'john.doe@example.com',
   })
-  @IsEmail()
+  @IsEmail({}, { message: 'Email must be a valid email address' })
+  @IsNotEmpty({ message: 'Email must not be empty' })
   email: string;
 
   @ApiProperty({
-    description: 'Password (min 6 characters)',
+    description: 'Password (minimum 6 characters)',
     example: 'secret123',
     minLength: 6,
   })
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Password must not be empty' })
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   password: string;
 }
