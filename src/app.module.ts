@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HelloController } from './hello/hello.controller';
@@ -10,6 +10,8 @@ import { NotesModule } from './notes/notes.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TasksModule } from './tasks/tasks.module';
+import { LoggerMiddleware } from './middleware/logger.middleware';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -20,7 +22,7 @@ import { TasksModule } from './tasks/tasks.module';
       isGlobal: true,
     }),
 
-    // Database connection using .env
+    // DB connection
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -32,13 +34,19 @@ import { TasksModule } from './tasks/tasks.module';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: false, // auto sync schema (disable in production!)
+        synchronize: false, // disable this for prod env. use migrations
       }),
     }),
 
     TasksModule,
+
+    AuthModule,
   ],
   controllers: [AppController, HelloController, GreetController],
   providers: [AppService, GreetService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*'); //applied logger middleware to all the requests
+  }
+}
