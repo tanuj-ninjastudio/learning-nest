@@ -30,7 +30,7 @@ export class Task {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ApiProperty({ example: 1, description: 'User ID who owns the task' })
+  @ApiProperty()
   @Column()
   userId: number;
 }
