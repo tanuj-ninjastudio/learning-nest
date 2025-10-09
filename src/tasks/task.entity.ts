@@ -29,4 +29,8 @@ export class Task {
   @ManyToOne(() => User, (user) => user.tasks, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
+
+  @ApiProperty({ example: 1, description: 'User ID who owns the task' })
+  @Column()
+  userId: number;
 }
