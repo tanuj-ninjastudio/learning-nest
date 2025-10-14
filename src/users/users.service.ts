@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user-dto';
 import { User } from './user.entity';
@@ -47,7 +48,9 @@ export class UsersService {
     });
     if (existing) throw new UserExistsException(dto.email);
 
-    const user = this.userRepo.create(dto);
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const user = this.userRepo.create({ ...dto, password: hashedPassword });
+
     const saved = await this.userRepo.save(user);
 
     return {
@@ -68,6 +71,11 @@ export class UsersService {
       if (emailExists && emailExists.id !== id) {
         throw new BadRequestException(`Email "${dto.email}" is already in use`);
       }
+    }
+
+    if (dto.password) {
+      const salt = await bcrypt.genSalt();
+      user.password = await bcrypt.hash(dto.password, salt);
     }
 
     Object.assign(user, dto);
@@ -91,5 +99,12 @@ export class UsersService {
       message: `User with ID ${id} deleted successfully`,
       data: null,
     };
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    console.log('Searching user by email:', email);
+    const user = await this.userRepo.findOne({ where: { email } });
+    console.log('User found:', user);
+    return user;
   }
 }

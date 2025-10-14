@@ -34,6 +34,9 @@ export class User {
   @CreateDateColumn()
   createdAt: Date;
 
+  @Column({ default: 'user' })
+  role: string;
+
   @OneToMany(() => Task, (task) => task.user, { cascade: true })
   tasks: Task[];
 }
