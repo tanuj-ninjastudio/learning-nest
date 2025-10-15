@@ -6,12 +6,25 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthService, JwtPayload } from './auth.service';
+import { IS_PUBLIC_KEY } from './roles.decorator';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private reflector: Reflector,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
+    // for public routes
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
+    // normal authguard working
     const request = context.switchToHttp().getRequest<Request>();
 
     const authHeader: string | undefined = request.headers['authorization'];

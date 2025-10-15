@@ -7,6 +7,7 @@ import {
   Param,
   Body,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -20,6 +21,9 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
+import { Roles } from 'src/auth/roles.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @ApiTags('Users')
 @Controller('users')
@@ -33,6 +37,8 @@ export class UsersController {
     description: 'List of all users with their tasks',
     type: [User],
   })
+  @Roles('admin')
+  @UseGuards(AuthGuard, RolesGuard) // use only when AuthGuard and RolesGuard are not global
   getAllUsers(): Promise<IApiResponse<User[]>> {
     return this.usersService.findAll();
   }

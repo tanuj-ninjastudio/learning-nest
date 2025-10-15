@@ -12,6 +12,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TasksModule } from './tasks/tasks.module';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 import { AuthModule } from './auth/auth.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -41,6 +42,8 @@ import { AuthModule } from './auth/auth.module';
     TasksModule,
 
     AuthModule,
+
+    AdminModule,
   ],
   controllers: [AppController, HelloController, GreetController],
   providers: [AppService, GreetService],
