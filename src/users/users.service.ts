@@ -102,9 +102,24 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    console.log('Searching user by email:', email);
-    const user = await this.userRepo.findOne({ where: { email } });
-    console.log('User found:', user);
-    return user;
+    return this.userRepo.findOne({ where: { email } });
+  }
+
+  async createManyFromCsv(users: CreateUserDto[]): Promise<User[]> {
+    const createdUsers: User[] = [];
+
+    for (const dto of users) {
+      const existing = await this.userRepo.findOne({
+        where: { email: dto.email },
+      });
+      if (existing) continue;
+
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+      const user = this.userRepo.create({ ...dto, password: hashedPassword });
+      const newUsers = await this.userRepo.save(user);
+      createdUsers.push(newUsers);
+    }
+
+    return createdUsers;
   }
 }
